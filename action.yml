@@ -1,0 +1,49 @@
+name: "deploy-docker-image"
+description: "Deploys a docker image to dokku"
+inputs:
+  app:
+    description: "The name of the dokku app"
+    required: false
+    default: "${{ github.event.repository.name }}"
+  name:
+    description: "Name of the image"
+    required: false
+    default: "${{ github.event.repository.name }}"
+  key:
+    description: "SSH private key"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ github.token }}
+    - name: Push Docker Image
+      run: |
+        docker push --all-tags ghcr.io/$USERNAME/$NAME
+      shell: bash
+      env:
+        USERNAME: ${{ github.actor }}
+        NAME: ${{ inputs.name }}
+    - name: Deploy to Dokku
+      run: |
+        mkdir -p ~/.ssh
+        eval `ssh-agent -s`
+        ssh-add - <<< "$SSH_PRIVATE_KEY"
+        ssh-keyscan 4lejandrito.dev >> ~/.ssh/known_hosts
+        export GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+        mkdir dokku
+        cd dokku
+        echo "FROM ghcr.io/4lejandrito/$NAME:sha-$(git rev-parse --short HEAD)" > Dockerfile
+        git init
+        git add .
+        git -c "user.name=Alejandro Tardín" -c "user.email=alejandro@tardin.com" commit -m "Deploying"
+        git push -f dokku@4lejandrito.dev:$APP master
+      shell: bash
+      env:
+        APP: ${{ inputs.app }}
+        NAME: ${{ inputs.name }}
+        SSH_PRIVATE_KEY: ${{ inputs.key }}
