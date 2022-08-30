@@ -12,6 +12,9 @@ inputs:
   key:
     description: "SSH private key"
     required: true
+  prune-gh-pat:
+    description: "GitHub personal access token to prune previous images"
+    required: false
 runs:
   using: "composite"
   steps:
@@ -47,3 +50,12 @@ runs:
         APP: ${{ inputs.app }}
         NAME: ${{ inputs.name }}
         SSH_PRIVATE_KEY: ${{ inputs.key }}
+    - name: Prune Docker Images
+      if: ${{ inputs.prune-gh-pat != '' }}
+      uses: vlaurin/action-ghcr-prune@main
+      with:
+        token: ${{ inputs.prune-gh-pat }}
+        container: ${{ inputs.name }}
+        keep-last: 1
+        untagged: true
+        tag-regex: ".*"
