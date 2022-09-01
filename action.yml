@@ -1,14 +1,6 @@
 name: "deploy-docker-image"
 description: "Deploys a docker image to dokku"
 inputs:
-  app:
-    description: "The name of the dokku app"
-    required: false
-    default: "${{ github.event.repository.name }}"
-  name:
-    description: "Name of the image"
-    required: false
-    default: "${{ github.event.repository.name }}"
   key:
     description: "SSH private key"
     required: true
@@ -26,11 +18,10 @@ runs:
         password: ${{ github.token }}
     - name: Push Docker Image
       run: |
-        docker push --all-tags ghcr.io/$USERNAME/$NAME
+        docker push --all-tags ghcr.io/$GITHUB_REPOSITORY
       shell: bash
       env:
-        USERNAME: ${{ github.actor }}
-        NAME: ${{ inputs.name }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
     - name: Deploy to Dokku
       run: |
         mkdir -p ~/.ssh
@@ -40,22 +31,26 @@ runs:
         export GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
         mkdir dokku
         cd dokku
-        echo "FROM ghcr.io/4lejandrito/$NAME:sha-$(git rev-parse --short HEAD)" > Dockerfile
+        echo "FROM ghcr.io/$GITHUB_REPOSITORY:sha-$(git rev-parse --short HEAD)" > Dockerfile
         git init
         git add .
         git -c "user.name=Alejandro Tardín" -c "user.email=alejandro@tardin.com" commit -m "Deploying"
-        git push -f dokku@4lejandrito.dev:$APP master
+        git push -f dokku@4lejandrito.dev:${GITHUB_REPOSITORY#*/} master
       shell: bash
       env:
-        APP: ${{ inputs.app }}
-        NAME: ${{ inputs.name }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
         SSH_PRIVATE_KEY: ${{ inputs.key }}
+    - name: Container Name
+      run: echo CONTAINER_NAME=${GITHUB_REPOSITORY#*/} >> $GITHUB_ENV
+      shell: bash
+      env:
+        GITHUB_REPOSITORY: ${{ github.repository }}
     - name: Prune Docker Images
       if: ${{ inputs.prune-gh-pat != '' }}
       uses: vlaurin/action-ghcr-prune@main
       with:
         token: ${{ inputs.prune-gh-pat }}
-        container: ${{ inputs.name }}
+        container: ${{ env.CONTAINER_NAME }}
         keep-last: 1
         untagged: true
         tag-regex: ".*"
