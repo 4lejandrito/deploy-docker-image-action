@@ -22,28 +22,24 @@ runs:
       shell: bash
       env:
         GITHUB_REPOSITORY: ${{ github.repository }}
+    - name: Get App Name
+      id: get-app-name
+      run: echo "::set-output name=app-name::$(echo ${GITHUB_REPOSITORY#*/})"
+      shell: bash
+      env:
+        GITHUB_REPOSITORY: ${{ github.repository }}
     - name: Deploy to Dokku
-      run: |
-        mkdir -p ~/.ssh
-        eval `ssh-agent -s`
-        ssh-add - <<< "$SSH_PRIVATE_KEY"
-        ssh-keyscan 4lejandrito.dev >> ~/.ssh/known_hosts
-        ssh dokku@4lejandrito.dev git:from-image ${GITHUB_REPOSITORY#*/} ghcr.io/$GITHUB_REPOSITORY:sha-$(git rev-parse --short HEAD)
-      shell: bash
-      env:
-        GITHUB_REPOSITORY: ${{ github.repository }}
-        SSH_PRIVATE_KEY: ${{ inputs.key }}
-    - name: Container Name
-      run: echo CONTAINER_NAME=${GITHUB_REPOSITORY#*/} >> $GITHUB_ENV
-      shell: bash
-      env:
-        GITHUB_REPOSITORY: ${{ github.repository }}
+      uses: dokku/github-action@master
+      with:
+        git_remote_url: ssh://dokku@4lejandrito.dev/${{ steps.get-app-name.outputs.app-name }}
+        ssh_private_key: ${{ inputs.key }}
+        deploy_docker_image: ghcr.io/${{ github.repository }}:${{ github.sha }}
     - name: Prune Docker Images
       if: ${{ inputs.prune-gh-pat != '' }}
       uses: vlaurin/action-ghcr-prune@main
       with:
         token: ${{ inputs.prune-gh-pat }}
-        container: ${{ env.CONTAINER_NAME }}
+        container: ${{ steps.get-app-name.outputs.app-name }}
         keep-last: 1
         untagged: true
         tag-regex: ".*"
