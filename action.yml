@@ -28,14 +28,7 @@ runs:
         eval `ssh-agent -s`
         ssh-add - <<< "$SSH_PRIVATE_KEY"
         ssh-keyscan 4lejandrito.dev >> ~/.ssh/known_hosts
-        export GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
-        mkdir dokku
-        cd dokku
-        echo "FROM ghcr.io/$GITHUB_REPOSITORY:sha-$(git rev-parse --short HEAD)" > Dockerfile
-        git init
-        git add .
-        git -c "user.name=Alejandro Tardín" -c "user.email=alejandro@tardin.com" commit -m "Deploying"
-        git push -f dokku@4lejandrito.dev:${GITHUB_REPOSITORY#*/} master
+        ssh dokku@4lejandrito.dev git:from-image ${GITHUB_REPOSITORY#*/} ghcr.io/$GITHUB_REPOSITORY:sha-$(git rev-parse --short HEAD)
       shell: bash
       env:
         GITHUB_REPOSITORY: ${{ github.repository }}
