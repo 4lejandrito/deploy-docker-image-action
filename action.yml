@@ -11,7 +11,7 @@ runs:
   using: "composite"
   steps:
     - name: Login to GitHub Container Registry
-      uses: docker/login-action@v1
+      uses: docker/login-action@v2
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -24,7 +24,7 @@ runs:
         GITHUB_REPOSITORY: ${{ github.repository }}
     - name: Get App Name
       id: get-app-name
-      run: echo "::set-output name=app-name::$(echo ${GITHUB_REPOSITORY#*/})"
+      run: echo "app-name=$(echo ${GITHUB_REPOSITORY#*/})" >> $GITHUB_OUTPUT
       shell: bash
       env:
         GITHUB_REPOSITORY: ${{ github.repository }}
@@ -41,5 +41,5 @@ runs:
         token: ${{ inputs.prune-gh-pat }}
         container: ${{ steps.get-app-name.outputs.app-name }}
         keep-last: 1
-        untagged: true
-        tag-regex: ".*"
+        prune-untagged: true
+        prune-tags-regexes: .*
