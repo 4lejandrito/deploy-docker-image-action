@@ -1,12 +1,21 @@
 name: "deploy-docker-image"
-description: "Deploys a docker image to dokku"
+description: "Deploys a docker image to my cloud"
 inputs:
-  key:
-    description: "SSH private key"
+  domain:
+    description: "Domain name"
     required: true
-  prune-gh-pat:
-    description: "GitHub personal access token to prune previous images"
-    required: false
+  email:
+    description: "Email"
+    required: true
+  port:
+    description: "Port"
+  private:
+    description: "Private"
+  volume:
+    description: "Volume"
+  token:
+    description: "GitHub personal access token"
+
 runs:
   using: "composite"
   steps:
@@ -28,17 +37,25 @@ runs:
       shell: bash
       env:
         GITHUB_REPOSITORY: ${{ github.repository }}
-    - name: Deploy to Dokku
-      uses: dokku/github-action@master
-      with:
-        git_remote_url: ssh://dokku@4lejandrito.dev/${{ steps.get-app-name.outputs.app-name }}
-        ssh_private_key: ${{ inputs.key }}
-        deploy_docker_image: ghcr.io/${{ github.repository }}:${{ github.sha }}
+    - name: Deploy
+      run: |
+        gh workflow run deploy.yml \
+          --repo 4lejandrito/cloud \
+          -f name="${{ steps.get-app-name.outputs.app-name }}" \
+          -f image="ghcr.io/$GITHUB_REPOSITORY:${{ github.sha }}" \
+          -f domain="${{ inputs.domain }}" \
+          -f email="${{ inputs.email }}" \
+          -f port="${{ inputs.port }}" \
+          -f private="${{ inputs.private }}" \
+          -f volume="${{ inputs.volume }}"
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
     - name: Prune Docker Images
-      if: ${{ inputs.prune-gh-pat != '' }}
+      if: ${{ inputs.token != '' }}
       uses: vlaurin/action-ghcr-prune@main
       with:
-        token: ${{ inputs.prune-gh-pat }}
+        token: ${{ inputs.token }}
         container: ${{ steps.get-app-name.outputs.app-name }}
         keep-last: 1
         prune-untagged: true
