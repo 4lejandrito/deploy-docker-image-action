@@ -85,7 +85,8 @@ runs:
           -f email="${{ inputs.email }}" \
           -f port="${{ inputs.port }}" \
           -f private="${{ inputs.private }}" \
-          -f volume="${{ inputs.volume }}"
+          -f volume="${{ inputs.volume }}" \
+          -f source="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.token }}
