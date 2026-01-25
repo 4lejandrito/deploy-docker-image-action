@@ -8,9 +8,6 @@ inputs:
   domain:
     description: "Domain name"
     required: true
-  email:
-    description: "Email"
-    required: true
   port:
     description: "Port"
     required: false
@@ -82,7 +79,6 @@ runs:
           -f name="${{ steps.get-app-name.outputs.app-name }}" \
           -f image="ghcr.io/$GITHUB_REPOSITORY:${{ github.sha }}" \
           -f domain="${{ inputs.domain }}" \
-          -f email="${{ inputs.email }}" \
           -f port="${{ inputs.port }}" \
           -f private="${{ inputs.private }}" \
           -f volume="${{ inputs.volume }}" \
