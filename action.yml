@@ -81,6 +81,6 @@ runs:
       with:
         token: ${{ inputs.token }}
         container: ${{ steps.get-app-name.outputs.app-name }}
-        keep-last: 1
+        keep-last: 2
         prune-untagged: true
         prune-tags-regexes: .*
