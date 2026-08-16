@@ -66,15 +66,16 @@ runs:
           --repo 4lejandrito/cloud \
           -f name="${{ steps.get-app-name.outputs.app-name }}" \
           -f image="ghcr.io/$GITHUB_REPOSITORY:${{ github.sha }}" \
-          -f domain="$(yq -r '.domain // ""' cloud.yaml)" \
-          -f port="$(yq -r '.port // ""' cloud.yaml)" \
-          -f port_tcp="$(yq -r '.port_tcp // ""' cloud.yaml)" \
-          -f private="$(yq -r '.private // ""' cloud.yaml)" \
-          -f volume="$(yq -r '.volume // ""' cloud.yaml)" \
+          -f domain="$(yq -r '.domain // ""' "$CLOUD_YAML")" \
+          -f port="$(yq -r '.port // ""' "$CLOUD_YAML")" \
+          -f port_tcp="$(yq -r '.port_tcp // ""' "$CLOUD_YAML")" \
+          -f private="$(yq -r '.private // ""' "$CLOUD_YAML")" \
+          -f volume="$(yq -r '.volume // ""' "$CLOUD_YAML")" \
           -f source="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.token }}
+        CLOUD_YAML: ${{ inputs.context }}/cloud.yaml
     - name: Prune Docker Images
       uses: vlaurin/action-ghcr-prune@main
       with:
