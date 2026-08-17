@@ -67,6 +67,7 @@ runs:
           -f name="${{ steps.get-app-name.outputs.app-name }}" \
           -f image="ghcr.io/$GITHUB_REPOSITORY:${{ github.sha }}" \
           -f domain="$(yq -r '.domain // ""' "$CLOUD_YAML")" \
+          -f healthcheck_path="$(yq -r '.healthcheck_path // ""' "$CLOUD_YAML")" \
           -f port="$(yq -r '.port // ""' "$CLOUD_YAML")" \
           -f port_tcp="$(yq -r '.port_tcp // ""' "$CLOUD_YAML")" \
           -f private="$(yq -r '.private // ""' "$CLOUD_YAML")" \
